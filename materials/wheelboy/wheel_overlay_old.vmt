@@ -1,6 +1,6 @@
 "UnlitGeneric"
 {
-    "$basetexture" "wheelboy/wheel_overlay_new"
+    "$basetexture" "wheelboy/wheel_overlay_old"
     "$translucent" "1"
     "$vertexcolor" "1"
     "$vertexalpha" "1"
