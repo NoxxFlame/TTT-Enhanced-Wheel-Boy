@@ -53,6 +53,14 @@ AddHook("InitPostEntity", "EnhancedWheelBoy_InitPostEntity", function()
 end)
 
 AddHook("TTTUpdateRoleState", "EnhancedWheelBoy_TTTUpdateRoleState", function()
+    ROLE_IS_ACTIVE[ROLE_WHEELBOY] = function(ply)
+        return ply:IsIndependentTeam()
+    end
+
+    ROLE_SHOULD_REVEAL_ROLE_WHEN_ACTIVE[ROLE_WHEELBOY] = function()
+        return true
+    end
+
     if wheelboy_enhanced_wheel:GetBool() then
         WHEELBOY.Effects = {
             {
