@@ -55,8 +55,10 @@ local function StartWheelBoyTimer()
     SetGlobalFloat("ttt_wheelboy_activate", CurTime() + wheelboyTime)
     for _, v in PlayerIterator() do
         if v:IsWheelBoy() and v:Alive() and not v:IsSpec() then
-            v:SetNWInt("WheelBoyNextSpinTime", CurTime() + wheelboyTime)
-            v:PrintMessage(HUD_PRINTTALK, "You will transform into Wheel Boy in " .. tostring(wheelboyTime) .. " seconds!")
+            timer.Simple(0.1, function()
+                v:SetNWInt("WheelBoyNextSpinTime", CurTime() + wheelboyTime)
+                v:PrintMessage(HUD_PRINTTALK, "You will transform into Wheel Boy in " .. tostring(wheelboyTime) .. " seconds!")
+            end)
         end
     end
     timer.Create("WheelBoyActivate", wheelboyTime, 1, function()
