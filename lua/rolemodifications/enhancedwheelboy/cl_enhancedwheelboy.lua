@@ -3,14 +3,10 @@ local net = net
 local player = player
 local surface = surface
 local string = string
-local table = table
-local util = util
 
 local AddHook = hook.Add
 local RemoveHook = hook.Remove
 local PlayerIterator = player.Iterator
-local MathMax = math.max
-local TableInsert = table.insert
 
 local client
 
@@ -150,32 +146,6 @@ end
 AddHook("TTTScoringWinTitle", "EnhancedWheelBoy_TTTScoringWinTitle", function(wintype, wintitles, title, secondaryWinRole)
     if wintype == WIN_WHEELBOY then
         return { txt = "hilite_win_role_singular_no_the", params = { role = string.upper(ROLE_STRINGS[ROLE_WHEELBOY]) }, c = ROLE_COLORS[ROLE_WHEELBOY] }
-    end
-end)
-
----------
--- HUD --
----------
-
-AddHook("TTTHUDInfoPaint", "EnhancedWheelBoy_TTTHUDInfoPaint", function(client, label_left, label_top, active_labels)
-    if hide_role:GetBool() then return end
-
-    if client:IsActiveWheelBoy() and not client:IsRoleActive() then
-        surface.SetFont("TabLarge")
-        surface.SetTextColor(255, 255, 255, 230)
-
-        local remaining = MathMax(0, GetGlobalFloat("ttt_wheelboy_activate", 0) - CurTime())
-        local text = LANG.GetParamTranslation("lootgoblin_hud", { time = util.SimpleTime(remaining, "%02i:%02i") })
-        local _, h = surface.GetTextSize(text)
-
-        -- Move this up based on how many other labels there are
-        label_top = label_top + (20 * #active_labels)
-
-        surface.SetTextPos(label_left, ScrH() - label_top - h)
-        surface.DrawText(text)
-
-        -- Track that the label was added so others can position accurately
-        TableInsert(active_labels, "wheelboyTransform")
     end
 end)
 
