@@ -1,21 +1,14 @@
 AddCSLuaFile()
 
 local hook = hook
-local ipairs = ipairs
 local math = math
 local net = net
 local player = player
-local table = table
 local timer = timer
-local util = util
-local weapons = weapons
 
 local AddHook = hook.Add
 local PlayerIterator = player.Iterator
-local CreateEntity = ents.Create
 local MathRandom = math.random
-local TableInsert = table.insert
-local TableRemove = table.remove
 
 ------------------
 -- ROLE CONVARS --
@@ -80,9 +73,6 @@ local function StartWheelBoyTimer()
             net.Start("TTT_WheelBoyAnnounceSound")
             net.Broadcast()
         end
-
-        wheelboy_announce_text:SetBool(announceText)
-        wheelboy_announce_sound:SetBool(announceSound)
     end)
 end
 
@@ -200,6 +190,8 @@ end)
 AddHook("TTTEndRound", "EnhancedWheelBoy_TTTEndRound", function()
     timer.Remove("WheelBoyActivate")
     wheelboyActive = false
+    wheelboy_announce_text:SetBool(announceText)
+    wheelboy_announce_sound:SetBool(announceSound)
 end)
 
 AddHook("TTTPrepareRound", "EnhancedWheelBoy_PrepareRound", function()
