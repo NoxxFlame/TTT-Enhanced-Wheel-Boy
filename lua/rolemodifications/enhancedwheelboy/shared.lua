@@ -24,6 +24,9 @@ end
 ------------------
 
 local wheelboy_enhanced_wheel = CreateConVar("ttt_wheelboy_enhanced_wheel", "1", FCVAR_REPLICATED)
+local wheelboy_speed_mult = CreateConVar("ttt_wheelboy_speed_mult", "1.2", FCVAR_REPLICATED, "The multiplier to use on the wheel boy's movement speed when they are activated (e.g. 1.2 = 120% normal speed)", 1, 2)
+local wheelboy_sprint_recovery = CreateConVar("ttt_wheelboy_sprint_recovery", "0.12", FCVAR_REPLICATED, "The amount of stamina to recover per tick when the wheel boy is activated", 0, 1)
+
 
 -- Independent ConVars
 CreateConVar("ttt_wheelboy_can_see_jesters", "1", FCVAR_REPLICATED)
@@ -42,6 +45,31 @@ table.insert(ROLE_CONVARS[ROLE_WHEELBOY], {
     type = ROLE_CONVAR_TYPE_NUM,
     decimal = 2
 })
+table.insert(ROLE_CONVARS[ROLE_WHEELBOY], {
+    cvar = "ttt_wheelboy_activation_timer",
+    type = ROLE_CONVAR_TYPE_NUM,
+    decimal = 2
+})
+table.insert(ROLE_CONVARS[ROLE_WHEELBOY], {
+    cvar = "ttt_wheelboy_activation_timer_max",
+    type = ROLE_CONVAR_TYPE_NUM,
+    decimal = 2
+})
+table.insert(ROLE_CONVARS[ROLE_WHEELBOY], {
+    cvar = "ttt_wheelboy_size",
+    type = ROLE_CONVAR_TYPE_NUM,
+    decimal = 2
+})
+table.insert(ROLE_CONVARS[ROLE_WHEELBOY], {
+    cvar = "ttt_wheelboy_speed_mult",
+    type = ROLE_CONVAR_TYPE_NUM,
+    decimal = 2
+})
+table.insert(ROLE_CONVARS[ROLE_WHEELBOY], {
+    cvar = "ttt_wheelboy_sprint_recovery",
+    type = ROLE_CONVAR_TYPE_NUM,
+    decimal = 2
+})
 
 --------------------
 -- ENHANCED WHEEL --
@@ -54,7 +82,7 @@ end)
 
 AddHook("TTTUpdateRoleState", "EnhancedWheelBoy_TTTUpdateRoleState", function()
     ROLE_IS_ACTIVE[ROLE_WHEELBOY] = function(ply)
-        return ply:IsIndependentTeam()
+        return ply:GetNWBool("WheelBoyActive", false)
     end
 
     ROLE_SHOULD_REVEAL_ROLE_WHEN_ACTIVE[ROLE_WHEELBOY] = function()
@@ -518,5 +546,21 @@ AddHook("TTTUpdateRoleState", "EnhancedWheelBoy_TTTUpdateRoleState", function()
         WHEELBOY.FreeSpins = 0
     else
         WHEELBOY.Effects = oldEffects
+    end
+end)
+
+------------------------
+-- SPRINT MULTIPLIERS --
+------------------------
+
+AddHook("TTTSprintStaminaRecovery", "EnhancedWheelBoy_TTTSprintStaminaRecovery", function(ply, recovery)
+    if IsPlayer(ply) and ply:IsActiveWheelBoy() and ply:IsRoleActive() then
+        return wheelboy_sprint_recovery:GetFloat()
+    end
+end)
+
+AddHook("TTTSpeedMultiplier", "EnhancedWheelBoy_TTTSpeedMultiplier", function(ply, mults)
+    if IsPlayer(ply) and ply:IsActiveWheelBoy() and ply:IsRoleActive() then
+        TableInsert(mults, wheelboy_speed_mult:GetFloat())
     end
 end)
