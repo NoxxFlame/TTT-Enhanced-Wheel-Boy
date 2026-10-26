@@ -10,12 +10,6 @@ local PlayerIterator = player.Iterator
 
 local client
 
--------------
--- CONVARS --
--------------
-
-local hide_role = GetConVar("ttt_hide_role")
-
 ------------------
 -- TRANSLATIONS --
 ------------------

@@ -7,13 +7,13 @@ local table = table
 
 local AddHook = hook.Add
 local MathCeil = math.ceil
+local MathMin = math.min
 local MathRandom = math.random
 local PlayerIterator = player.Iterator
 local TableAdd = table.Add
 local TableHasValue = table.HasValue
 local TableInsert = table.insert
 local TableRandom = table.Random
-local TableShuffle = table.Shuffle
 
 if SERVER then
     util.AddNetworkString("TTT_WheelBoyMassacre")
@@ -89,6 +89,7 @@ AddHook("TTTUpdateRoleState", "EnhancedWheelBoy_TTTUpdateRoleState", function()
         return true
     end
 
+    local oldWheelTime
     if wheelboy_enhanced_wheel:GetBool() then
         WHEELBOY.Effects = {
             {
@@ -149,10 +150,13 @@ AddHook("TTTUpdateRoleState", "EnhancedWheelBoy_TTTUpdateRoleState", function()
                             TableInsert(weaponLists, v:GetWeapons())
                         end
                     end
-                    TableShuffle(targets)
 
                     for k, v in ipairs(targets) do
-                        local weaponList = weaponLists[k]
+                        local index = k + 1
+                        if index > #targets then
+                            index = 1
+                        end
+                        local weaponList = weaponLists[index]
                         local roleWeapons = {}
                         for _, w in ipairs(v:GetWeapons()) do
                             if w.Category == WEAPON_CATEGORY_ROLE or WEPS.GetClass(w) == "weapon_ttt_wtester" then
@@ -278,10 +282,12 @@ AddHook("TTTUpdateRoleState", "EnhancedWheelBoy_TTTUpdateRoleState", function()
                     local chosen
                     if #others > 0 then
                         chosen = others[MathRandom(1, #others)]
-                    elseif #innocents > 0 then
+                    elseif #innocents + #detectives > 1 then -- Check innocents twice to prevent the round from ending by removing all innocents
                         chosen = innocents[MathRandom(1, #innocents)]
                     elseif #traitors > 1 then -- Check traitors twice to prevent the round from ending by removing all traitors
                         chosen = traitors[MathRandom(1, #traitors)]
+                    elseif #innocents > 0 then
+                        chosen = innocents[MathRandom(1, #innocents)]
                     elseif #detectives > 0 then
                         chosen = detectives[MathRandom(1, #detectives)]
                     elseif #traitors > 0 then
@@ -357,7 +363,7 @@ AddHook("TTTUpdateRoleState", "EnhancedWheelBoy_TTTUpdateRoleState", function()
                         if v:IsActive() then
                             local maxHealth = v:GetMaxHealth()
                             if v:IsWheelBoy() then
-                                v:SetHealth(MathRandom(MathCeil((maxHealth / 3) * 2), maxHealth)) -- Try to make things a bit more favourable for Wheel Boy
+                                v:SetHealth(MathRandom(MathCeil((maxHealth / 4) * 3), maxHealth)) -- Try to make things a bit more favourable for Wheel Boy
                             else
                                 v:SetHealth(MathRandom(1, maxHealth))
                             end
@@ -427,10 +433,13 @@ AddHook("TTTUpdateRoleState", "EnhancedWheelBoy_TTTUpdateRoleState", function()
                             })
                         end
                     end
-                    TableShuffle(targets)
 
                     for k, v in ipairs(targets) do
-                        local position = positions[k]
+                        local index = k + 1
+                        if index > #targets then
+                            index = 1
+                        end
+                        local position = positions[index]
                         v:SetPos(position["pos"])
                         v:SetEyeAngles(position["angle"])
                     end
@@ -441,17 +450,19 @@ AddHook("TTTUpdateRoleState", "EnhancedWheelBoy_TTTUpdateRoleState", function()
                 name = "Free shop item",
                 start = function(p, this)
                     local shopItems = {}
+                    local hasItems = false
                     for role = ROLE_NONE, ROLE_MAX do
                         if SHOP_ROLES[role] and util.CanRoleSpawn(role) then
                             for _, w in ipairs(weapons.GetList()) do
                                 if w and not w.AutoSpawnable and w.CanBuy and #w.CanBuy > 0 and TableHasValue(w.CanBuy, role) then
                                     shopItems[w.ClassName] = w
+                                    hasItems = true
                                 end
                             end
                         end
                     end
 
-                    if #shopItems > 0 then
+                    if hasItems then
                         for _, v in PlayerIterator() do
                             if not IsPlayer(v) then continue end
 
@@ -467,14 +478,24 @@ AddHook("TTTUpdateRoleState", "EnhancedWheelBoy_TTTUpdateRoleState", function()
             {
                 name = "Two free spins",
                 start = function(p, this)
-                    local wheelTime = GetConVar("ttt_wheelboy_wheel_time"):GetInt()
+                    if not oldWheelTime then
+                        local wheelboy_wheel_time = GetConVar("ttt_wheelboy_wheel_time")
+                        oldWheelTime = wheelboy_wheel_time:GetInt()
+                        wheelboy_wheel_time:SetInt(MathMin(oldWheelTime, 5))
+                    end
+                    local wheelTime = MathMin(oldWheelTime, 5)
                     local waitTime = GetConVar("ttt_wheelboy_wheel_end_wait_time"):GetInt()
 
                     if p.WheelBoyFreeSpins == 0 then
                         p.WheelBoyFreeSpins = 2
                         timer.Create("TTTWheelBoyFreeSpin", 0.2, 0, function()
                             if p.WheelBoyFreeSpins == 0 then
+                                if oldWheelTime then
+                                    GetConVar("ttt_wheelboy_wheel_time"):SetInt(oldWheelTime)
+                                    oldWheelTime = nil
+                                end
                                 timer.Stop("TTTWheelBoyFreeSpin")
+                                return
                             end
 
                             timer.Adjust("TTTWheelBoyFreeSpin", wheelTime + waitTime + 0.2)
@@ -492,6 +513,12 @@ AddHook("TTTUpdateRoleState", "EnhancedWheelBoy_TTTUpdateRoleState", function()
 
                             p.WheelBoyFreeSpins = p.WheelBoyFreeSpins - 1
                             if p.WheelBoyFreeSpins == 0 then
+                                timer.Simple(1, function()
+                                    if oldWheelTime then
+                                        GetConVar("ttt_wheelboy_wheel_time"):SetInt(oldWheelTime)
+                                        oldWheelTime = nil
+                                    end
+                                end)
                                 timer.Stop("TTTWheelBoyFreeSpin")
                             end
                         end)
@@ -500,11 +527,15 @@ AddHook("TTTUpdateRoleState", "EnhancedWheelBoy_TTTUpdateRoleState", function()
                     end
 
                     local nextSpinTime = p:GetNWInt("WheelBoyNextSpinTime", nil)
-                    p:SetNWInt("WheelBoyNextSpinTime", nextSpinTime + ((wheelTime + waitTime + 0.2) * 2))
+                    p:SetNWInt("WheelBoyNextSpinTime", nextSpinTime + ((wheelTime + waitTime + 0.2) * p.WheelBoyFreeSpins))
                 end,
                 finish = function()
                     for _, v in PlayerIterator() do
                         v.WheelBoyFreeSpins = 0
+                    end
+                    if oldWheelTime then
+                        GetConVar("ttt_wheelboy_wheel_time"):SetInt(oldWheelTime)
+                        oldWheelTime = nil
                     end
                     timer.Stop("TTTWheelBoyFreeSpin")
                 end
